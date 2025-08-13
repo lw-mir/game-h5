@@ -1,0 +1,948 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Music Theory Trainer</title>
+  <style>
+    :root {
+      --bg: #0b1020;
+      --bg-2: #0f1630;
+      --card: #151b36;
+      --primary: #7c5cff;
+      --primary-2: #5fc9ff;
+      --accent: #ffd166;
+      --good: #93f9a2;
+      --bad: #ff7a7a;
+      --text: #e8edff;
+      --subtext: #aab2d6;
+      --white-key: #f7f7fb;
+      --black-key: #222533;
+      --black-top: #0f1222;
+      --shadow: rgba(0,0,0,0.35);
+      --glow: rgba(124,92,255,.45);
+    }
+
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      color: var(--text);
+      background: radial-gradient(1200px 800px at 10% -10%, #1b1f3a 0%, #0b1020 60%, #060913 100%);
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Noto Sans", "Helvetica Neue", Arial, "Apple Color Emoji", "Segoe UI Emoji";
+      overflow-x: hidden;
+    }
+
+    header {
+      position: relative;
+      padding: 28px 20px 18px 20px;
+      background: linear-gradient(135deg, rgba(124,92,255,.25), rgba(95,201,255,.15));
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      box-shadow: inset 0 -1px 0 rgba(255,255,255,0.04);
+    }
+    .title {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .logo {
+      width: 42px; height: 42px;
+      display: grid; place-items: center;
+      border-radius: 10px;
+      background: radial-gradient(circle at 30% 30%, var(--primary), #3a2e7a 70%);
+      box-shadow: 0 8px 20px var(--glow), inset 0 0 12px rgba(255,255,255,.18);
+      color: #fff;
+      font-weight: 900;
+      letter-spacing: .5px;
+    }
+    .title h1 {
+      margin: 0;
+      font-size: 22px;
+    }
+    .subtitle {
+      margin: 2px 0 0 58px;
+      color: var(--subtext);
+      font-size: 13px;
+    }
+
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px 16px;
+      margin-top: 14px;
+      padding: 14px;
+      border-radius: 14px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.03));
+      border: 1px solid rgba(255,255,255,0.06);
+    }
+
+    .tool {
+      display: flex; align-items: center; gap: 8px;
+      background: var(--card);
+      border: 1px solid rgba(255,255,255,0.06);
+      padding: 8px 10px; border-radius: 10px;
+      box-shadow: 0 6px 16px rgba(0,0,0,0.2);
+    }
+    .tool label { font-size: 12px; color: var(--subtext); }
+    .tool select, .tool input[type="range"], .tool input[type="checkbox"] {
+      accent-color: var(--primary);
+    }
+
+    main {
+      display: grid;
+      grid-template-columns: 1.2fr 1fr;
+      gap: 18px;
+      padding: 18px;
+    }
+    @media (max-width: 1100px) {
+      main { grid-template-columns: 1fr; }
+    }
+
+    .panel, .piano-card {
+      background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.03));
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 16px;
+      box-shadow: 0 12px 30px rgba(0,0,0,0.35);
+    }
+
+    .piano-wrap { padding: 16px; }
+    .piano-toolbar {
+      display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 10px;
+    }
+    .badge { font-size: 12px; color: var(--subtext); }
+
+    .piano {
+      position: relative;
+      user-select: none;
+      background: #0e1328;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,0.1);
+      padding: 14px 10px 16px 10px;
+      overflow: hidden;
+    }
+    .keys { position: relative; height: 220px; }
+
+    .white-key {
+      position: relative;
+      display: inline-block;
+      width: 48px; height: 200px;
+      margin: 0 2px 0 0;
+      background: linear-gradient(180deg, #fafbff 0%, #f0f2fb 70%, #e6e8f5 100%);
+      border: 1px solid #c9cde2;
+      border-bottom-width: 4px;
+      border-radius: 0 0 8px 8px;
+      box-shadow: inset 0 -4px 0 #c9cde2, 0 5px 14px rgba(0,0,0,0.25);
+      vertical-align: top;
+      cursor: pointer;
+    }
+    .white-key.active { background: linear-gradient(180deg, #e9ebf7, #d9dff5); box-shadow: inset 0 -4px 0 #b8bdd7, 0 0 0 3px rgba(124,92,255,0.25), 0 5px 14px rgba(0,0,0,0.25); }
+
+    .black-key {
+      position: absolute;
+      width: 30px; height: 120px;
+      background: linear-gradient(180deg, #1b1f35 0%, #0f1222 70%);
+      border: 1px solid #0b0f20;
+      border-bottom-width: 4px;
+      border-radius: 0 0 6px 6px;
+      box-shadow: inset 0 -4px 0 #070a18, 0 6px 16px rgba(0,0,0,0.5);
+      top: 0; z-index: 3;
+      cursor: pointer;
+    }
+    .black-key.active { background: linear-gradient(180deg, #242945, #12162b); box-shadow: inset 0 -4px 0 #0c1022, 0 0 0 3px rgba(124,92,255,0.35), 0 6px 16px rgba(0,0,0,0.5); }
+
+    .label {
+      position: absolute; bottom: 10px; left: 0; right: 0;
+      text-align: center; font-size: 11px; color: #343a5c;
+      pointer-events: none;
+    }
+    .black-key .label { color: #c8cdf1; bottom: 8px; font-size: 10px; }
+
+    .panels { padding: 16px; display: grid; gap: 16px; }
+
+    .tabs { display: flex; gap: 8px; padding: 10px; }
+    .tab-btn {
+      padding: 8px 12px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.09);
+      background: #141a35; color: var(--text); cursor: pointer; font-size: 13px;
+    }
+    .tab-btn.active { background: linear-gradient(180deg, rgba(124,92,255,.18), rgba(124,92,255,.08)); border-color: rgba(124,92,255,.4); }
+
+    .tab-panel { display: none; padding: 10px; }
+    .tab-panel.active { display: block; }
+
+    .row { display: flex; align-items: center; flex-wrap: wrap; gap: 10px 14px; margin: 10px 0; }
+    .row label { font-size: 13px; color: var(--subtext); }
+    .row select, .row button, .row input[type="checkbox"] { accent-color: var(--primary); }
+
+    .btn {
+      background: linear-gradient(180deg, #2a2f5a, #1a2146);
+      color: #fff; border: 1px solid rgba(255,255,255,0.1);
+      padding: 8px 12px; border-radius: 10px; cursor: pointer;
+      box-shadow: 0 8px 16px rgba(0,0,0,0.35);
+    }
+    .btn.primary { background: linear-gradient(180deg, #7c5cff, #5e46f1); border-color: rgba(124,92,255,0.6); }
+    .btn.ghost { background: transparent; border-color: rgba(255,255,255,0.14); }
+
+    .score {
+      display: flex; gap: 10px; flex-wrap: wrap;
+      padding: 8px 10px; border-radius: 10px; background: #111634; border: 1px solid rgba(255,255,255,0.08);
+      font-size: 12px; color: var(--subtext);
+    }
+    .score strong { color: var(--text); }
+
+    .toast { position: fixed; right: 16px; bottom: 16px; padding: 12px 14px; background: #111634; border: 1px solid rgba(255,255,255,0.12); border-radius: 12px; box-shadow: 0 10px 24px rgba(0,0,0,0.4); display: none; }
+    .toast.good { border-color: rgba(147,249,162,0.5); box-shadow: 0 0 0 3px rgba(147,249,162,0.18), 0 10px 24px rgba(0,0,0,0.4); }
+    .toast.bad { border-color: rgba(255,122,122,0.5); box-shadow: 0 0 0 3px rgba(255,122,122,0.18), 0 10px 24px rgba(0,0,0,0.4); }
+
+    .unlock {
+      position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(2px);
+      background: rgba(6, 9, 19, .6); z-index: 50; transition: .2s; visibility: hidden; opacity: 0;
+    }
+    .unlock.show { visibility: visible; opacity: 1; }
+    .unlock .box { background: #0f1533; border: 1px solid rgba(255,255,255,0.12); padding: 18px; border-radius: 14px; text-align: center; }
+
+    footer { color: var(--subtext); padding: 14px 18px 30px; font-size: 12px; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="title">
+      <div class="logo">♪</div>
+      <h1>Music Theory Trainer</h1>
+    </div>
+    <div class="subtitle">音乐主题、可交互的单页应用：学音符、音阶、和弦，并进行听音训练</div>
+
+    <div class="toolbar">
+      <div class="tool">
+        <label for="waveSelect">音色</label>
+        <select id="waveSelect">
+          <option value="sine">Sine</option>
+          <option value="triangle" selected>Triangle</option>
+          <option value="sawtooth">Saw</option>
+          <option value="square">Square</option>
+        </select>
+      </div>
+      <div class="tool">
+        <label for="volumeRange">音量</label>
+        <input id="volumeRange" type="range" min="0" max="1" step="0.01" value="0.7" />
+      </div>
+      <div class="tool">
+        <label for="attackRange">起音</label>
+        <input id="attackRange" type="range" min="0" max="0.2" step="0.005" value="0.01" />
+      </div>
+      <div class="tool">
+        <label for="releaseRange">释音</label>
+        <input id="releaseRange" type="range" min="0.05" max="1.5" step="0.05" value="0.4" />
+      </div>
+      <div class="tool">
+        <label for="showFlats">显示降号</label>
+        <input id="showFlats" type="checkbox" />
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <section class="piano-card">
+      <div class="piano-wrap">
+        <div class="piano-toolbar">
+          <div class="badge">范围：C4 → C6（共 25 键）</div>
+          <div class="badge">提示：点击任意处解锁音频</div>
+        </div>
+        <div class="piano">
+          <div id="keys" class="keys"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panels">
+        <div class="tabs">
+          <button class="tab-btn active" data-tab="tab-train">听音训练</button>
+          <button class="tab-btn" data-tab="tab-learn">学习区</button>
+        </div>
+
+        <div id="tab-train" class="tab-panel active">
+          <div class="tabs">
+            <button class="tab-btn active" data-subtab="note">音符</button>
+            <button class="tab-btn" data-subtab="scale">音阶</button>
+            <button class="tab-btn" data-subtab="chord">和弦</button>
+          </div>
+
+          <div id="train-note" class="subpanel">
+            <div class="row">
+              <button id="notePlay" class="btn primary">出题</button>
+              <button id="noteReplay" class="btn">再听一次</button>
+              <button id="noteReveal" class="btn ghost">揭晓</button>
+              <label><input id="noteWithOctave" type="checkbox" /> 答案含八度</label>
+              <div class="score" id="noteScore"></div>
+            </div>
+          </div>
+
+          <div id="train-scale" class="subpanel" style="display:none;">
+            <div class="row">
+              <label>包含类型：</label>
+              <label><input type="checkbox" class="scale-type" value="major" checked /> 大调</label>
+              <label><input type="checkbox" class="scale-type" value="naturalMinor" checked /> 自然小调</label>
+              <label><input type="checkbox" class="scale-type" value="majorPent" /> 大五声</label>
+              <label><input type="checkbox" class="scale-type" value="minorPent" /> 小五声</label>
+              <label><input type="checkbox" class="scale-type" value="blues" /> 蓝调</label>
+            </div>
+            <div class="row">
+              <button id="scalePlay" class="btn primary">出题</button>
+              <button id="scaleReplay" class="btn">再听一次</button>
+              <button id="scaleReveal" class="btn ghost">揭晓</button>
+              <div class="score" id="scaleScore"></div>
+            </div>
+            <div class="row" id="scaleOptions"></div>
+          </div>
+
+          <div id="train-chord" class="subpanel" style="display:none;">
+            <div class="row">
+              <label>包含类型：</label>
+              <label><input type="checkbox" class="chord-type" value="maj" checked /> 大三</label>
+              <label><input type="checkbox" class="chord-type" value="min" checked /> 小三</label>
+              <label><input type="checkbox" class="chord-type" value="dim" /> 减三</label>
+              <label><input type="checkbox" class="chord-type" value="aug" /> 增三</label>
+              <label><input type="checkbox" class="chord-type" value="maj7" /> Maj7</label>
+              <label><input type="checkbox" class="chord-type" value="min7" /> min7</label>
+              <label><input type="checkbox" class="chord-type" value="dom7" /> 7</label>
+            </div>
+            <div class="row">
+              <button id="chordPlay" class="btn primary">出题</button>
+              <button id="chordReplay" class="btn">再听一次</button>
+              <button id="chordReveal" class="btn ghost">揭晓</button>
+              <div class="score" id="chordScore"></div>
+            </div>
+            <div class="row" id="chordOptions"></div>
+          </div>
+        </div>
+
+        <div id="tab-learn" class="tab-panel">
+          <div class="row">
+            <label>根音</label>
+            <select id="learnRoot"></select>
+            <label>音阶</label>
+            <select id="learnScale">
+              <option value="major">大调</option>
+              <option value="naturalMinor">自然小调</option>
+              <option value="majorPent">大五声</option>
+              <option value="minorPent">小五声</option>
+              <option value="blues">蓝调</option>
+            </select>
+            <button id="playLearnScale" class="btn">播放音阶</button>
+          </div>
+          <div class="row">
+            <label>和弦</label>
+            <select id="learnChord">
+              <option value="maj">大三</option>
+              <option value="min">小三</option>
+              <option value="dim">减三</option>
+              <option value="aug">增三</option>
+              <option value="maj7">Maj7</option>
+              <option value="min7">min7</option>
+              <option value="dom7">7</option>
+            </select>
+            <button id="playLearnChord" class="btn">播放和弦</button>
+            <button id="clearHighlight" class="btn ghost">清除高亮</button>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    小提示：若页面无声，请先点击任意处以解锁音频；移动端建议横屏。Made with Web Audio API.
+  </footer>
+
+  <div class="unlock" id="unlock">
+    <div class="box">
+      <div style="font-size:18px; margin-bottom:8px;">需要点击以解锁音频</div>
+      <button id="unlockBtn" class="btn primary">点击开始</button>
+    </div>
+  </div>
+
+  <div id="toast" class="toast"></div>
+
+  <script>
+    const NOTE_NAMES_SHARP = ["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"];
+    const NOTE_NAMES_FLAT  = ["C","Db","D","Eb","E","F","Gb","G","Ab","A","Bb","B"];
+
+    const START_MIDI = 60;   // C4
+    const END_MIDI   = 84;   // C6
+
+    const StorageKeys = {
+      settings: 'mtt_settings_v1',
+      score: 'mtt_score_v1'
+    };
+
+    const defaultSettings = {
+      wave: 'triangle',
+      volume: 0.7,
+      attack: 0.01,
+      release: 0.4,
+      useFlats: false
+    };
+
+    const defaultScore = {
+      note: { correct: 0, total: 0, streak: 0 },
+      scale: { correct: 0, total: 0, streak: 0 },
+      chord: { correct: 0, total: 0, streak: 0 }
+    };
+
+    let settings = loadLocal(StorageKeys.settings, defaultSettings);
+    let score = loadLocal(StorageKeys.score, defaultScore);
+
+    function loadLocal(key, fallback) {
+      try {
+        const raw = localStorage.getItem(key);
+        if (!raw) return structuredClone(fallback);
+        const parsed = JSON.parse(raw);
+        return { ...structuredClone(fallback), ...parsed };
+      } catch (e) {
+        return structuredClone(fallback);
+      }
+    }
+    function saveLocal(key, value) {
+      try { localStorage.setItem(key, JSON.stringify(value)); } catch (_) {}
+    }
+
+    function midiToFreq(midi) {
+      return 440 * Math.pow(2, (midi - 69) / 12);
+    }
+    function noteName(midi, useFlats = false, withOctave = true) {
+      const names = useFlats ? NOTE_NAMES_FLAT : NOTE_NAMES_SHARP;
+      const pc = names[midi % 12];
+      const oct = Math.floor(midi / 12) - 1;
+      return withOctave ? `${pc}${oct}` : pc;
+    }
+
+    const ScaleDefs = {
+      major: { name: '大调', steps: [0,2,4,5,7,9,11,12] },
+      naturalMinor: { name: '自然小调', steps: [0,2,3,5,7,8,10,12] },
+      majorPent: { name: '大五声', steps: [0,2,4,7,9,12] },
+      minorPent: { name: '小五声', steps: [0,3,5,7,10,12] },
+      blues: { name: '蓝调', steps: [0,3,5,6,7,10,12] },
+    };
+
+    const ChordDefs = {
+      maj:   { name: '大三', steps: [0,4,7] },
+      min:   { name: '小三', steps: [0,3,7] },
+      dim:   { name: '减三', steps: [0,3,6] },
+      aug:   { name: '增三', steps: [0,4,8] },
+      maj7:  { name: 'Maj7', steps: [0,4,7,11] },
+      min7:  { name: 'min7', steps: [0,3,7,10] },
+      dom7:  { name: '7', steps: [0,4,7,10] },
+    };
+
+    const AudioEngine = (() => {
+      let ctx = null;
+      let masterGain = null;
+      const active = new Map();
+
+      function ensure() {
+        if (!ctx) {
+          ctx = new (window.AudioContext || window.webkitAudioContext)();
+          masterGain = ctx.createGain();
+          masterGain.gain.value = settings.volume;
+          masterGain.connect(ctx.destination);
+        }
+        return ctx;
+      }
+
+      async function resume() {
+        ensure();
+        if (ctx.state !== 'running') await ctx.resume();
+      }
+
+      function setVolume(v) {
+        ensure();
+        masterGain.gain.setTargetAtTime(v, ctx.currentTime, 0.01);
+      }
+
+      function startNote(midi, { durationMs = null } = {}) {
+        ensure();
+        const t = ctx.currentTime;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+
+        osc.type = settings.wave;
+        osc.frequency.value = midiToFreq(midi);
+
+        gain.gain.setValueAtTime(0, t);
+        gain.gain.linearRampToValueAtTime(1, t + Math.max(0.001, settings.attack));
+        if (durationMs) {
+          const end = t + settings.attack + durationMs / 1000;
+          gain.gain.setTargetAtTime(0, end, Math.max(0.02, settings.release));
+          osc.stop(end + settings.release + 0.05);
+        }
+
+        osc.connect(gain).connect(masterGain);
+        osc.start();
+
+        const list = active.get(midi) || [];
+        list.push({ osc, gain });
+        active.set(midi, list);
+      }
+
+      function stopNote(midi) {
+        if (!active.has(midi) || !ctx) return;
+        const t = ctx.currentTime;
+        const nodes = active.get(midi);
+        active.delete(midi);
+        for (const { osc, gain } of nodes) {
+          try {
+            gain.gain.cancelScheduledValues(t);
+            gain.gain.setTargetAtTime(0, t, Math.max(0.02, settings.release));
+            osc.stop(t + settings.release + 0.05);
+          } catch(_) {}
+        }
+      }
+
+      function playChord(midis, { block = true, arpeggioMs = 90, holdMs = 900 } = {}) {
+        if (block) {
+          midis.forEach(m => startNote(m, { durationMs: holdMs }));
+        } else {
+          let delay = 0;
+          for (const m of midis) {
+            setTimeout(() => startNote(m, { durationMs: holdMs }), delay);
+            delay += arpeggioMs;
+          }
+        }
+      }
+
+      async function playScale(root, steps, { stepMs = 220 } = {}) {
+        for (const st of steps) {
+          startNote(root + st, { durationMs: stepMs * 0.9 });
+          await wait(stepMs);
+        }
+        for (let i = steps.length - 2; i >= 0; i--) {
+          startNote(root + steps[i], { durationMs: stepMs * 0.9 });
+          await wait(stepMs);
+        }
+      }
+
+      return { ensure, resume, setVolume, startNote, stopNote, playChord, playScale };
+    })();
+
+    function wait(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+    const keysEl = document.getElementById('keys');
+
+    const whiteWidth = 48; const whiteGap = 2; const blackWidth = 30;
+
+    function isBlack(n) { return [1,3,6,8,10].includes(n % 12); }
+
+    function buildKeyboard() {
+      keysEl.innerHTML = '';
+      const whitePositions = new Map();
+      let whiteIndexGlobal = 0;
+
+      for (let midi = START_MIDI; midi <= END_MIDI; midi++) {
+        const n = midi % 12;
+        if (!isBlack(n)) {
+          const x = whiteIndexGlobal * (whiteWidth + whiteGap);
+          const key = document.createElement('div');
+          key.className = 'white-key';
+          key.style.left = `${x}px`;
+          key.style.position = 'relative';
+          key.dataset.midi = String(midi);
+          key.dataset.black = '0';
+
+          const lab = document.createElement('div');
+          lab.className = 'label';
+          lab.textContent = noteName(midi, settings.useFlats, true);
+          key.appendChild(lab);
+
+          addKeyEvents(key, midi);
+          keysEl.appendChild(key);
+
+          whitePositions.set(`${midi}`, { x, idx: whiteIndexGlobal });
+          whiteIndexGlobal++;
+        }
+      }
+
+      function blackLeftInOctave(noteIndex) {
+        const mapping = { 1:0, 3:1, 6:3, 8:4, 10:5 };
+        return mapping[noteIndex];
+      }
+
+      for (let midi = START_MIDI; midi <= END_MIDI; midi++) {
+        const n = midi % 12;
+        if (isBlack(n)) {
+          const octave = Math.floor((midi - START_MIDI) / 12);
+          const whiteBase = octave * 7 + blackLeftInOctave(n);
+          const x = whiteBase * (whiteWidth + whiteGap) + Math.round(whiteWidth * 0.72);
+
+          const key = document.createElement('div');
+          key.className = 'black-key';
+          key.style.left = `${x}px`;
+          key.dataset.midi = String(midi);
+          key.dataset.black = '1';
+
+          const lab = document.createElement('div');
+          lab.className = 'label';
+          lab.textContent = noteName(midi, settings.useFlats, true);
+          key.appendChild(lab);
+
+          addKeyEvents(key, midi);
+          keysEl.appendChild(key);
+        }
+      }
+
+      const totalWhite = Array.from({length: END_MIDI - START_MIDI + 1}).reduce((acc, _, i) => acc + (isBlack((START_MIDI + i) % 12) ? 0 : 1), 0);
+      keysEl.style.width = `${totalWhite * (whiteWidth + whiteGap) + 2}px`;
+    }
+
+    function addKeyEvents(el, midi) {
+      let pressed = false;
+      el.addEventListener('pointerdown', async (e) => {
+        e.preventDefault();
+        await AudioEngine.resume();
+        pressed = true;
+        highlightKey(midi, true);
+        AudioEngine.startNote(midi);
+        handlePotentialAnswer('note', midi);
+      });
+      const end = () => {
+        if (!pressed) return;
+        pressed = false;
+        highlightKey(midi, false);
+        AudioEngine.stopNote(midi);
+      };
+      el.addEventListener('pointerup', end);
+      el.addEventListener('pointerleave', end);
+    }
+
+    function highlightKey(midi, on) {
+      const selector = `[data-midi="${midi}"]`;
+      const el = keysEl.querySelector(selector);
+      if (!el) return;
+      el.classList.toggle('active', on);
+    }
+
+    function refreshLabels() {
+      keysEl.querySelectorAll('[data-midi]').forEach(el => {
+        const midi = Number(el.dataset.midi);
+        const lab = el.querySelector('.label');
+        lab.textContent = noteName(midi, settings.useFlats, true);
+      });
+    }
+
+    const waveSelect = document.getElementById('waveSelect');
+    const volumeRange = document.getElementById('volumeRange');
+    const attackRange = document.getElementById('attackRange');
+    const releaseRange = document.getElementById('releaseRange');
+    const showFlats = document.getElementById('showFlats');
+
+    waveSelect.value = settings.wave;
+    volumeRange.value = String(settings.volume);
+    attackRange.value = String(settings.attack);
+    releaseRange.value = String(settings.release);
+    showFlats.checked = settings.useFlats;
+
+    waveSelect.addEventListener('change', () => { settings.wave = waveSelect.value; saveLocal(StorageKeys.settings, settings); });
+    volumeRange.addEventListener('input', () => { settings.volume = Number(volumeRange.value); AudioEngine.setVolume(settings.volume); saveLocal(StorageKeys.settings, settings); });
+    attackRange.addEventListener('input', () => { settings.attack = Number(attackRange.value); saveLocal(StorageKeys.settings, settings); });
+    releaseRange.addEventListener('input', () => { settings.release = Number(releaseRange.value); saveLocal(StorageKeys.settings, settings); });
+    showFlats.addEventListener('change', () => { settings.useFlats = showFlats.checked; saveLocal(StorageKeys.settings, settings); refreshLabels(); refreshLearnRootOptions(); });
+
+    buildKeyboard();
+
+    const unlock = document.getElementById('unlock');
+    const unlockBtn = document.getElementById('unlockBtn');
+    function showUnlock() { unlock.classList.add('show'); }
+    function hideUnlock() { unlock.classList.remove('show'); }
+    if (!window.AudioContext && !window.webkitAudioContext) {
+      showToast('当前浏览器不支持 Web Audio', true);
+    } else {
+      showUnlock();
+    }
+    unlockBtn.addEventListener('click', async () => {
+      await AudioEngine.resume();
+      hideUnlock();
+    });
+
+    document.addEventListener('click', async () => {
+      if (unlock.classList.contains('show')) {
+        await AudioEngine.resume();
+        hideUnlock();
+      }
+    }, { once: true });
+
+    const tabBtns = document.querySelectorAll('.tabs > .tab-btn');
+    tabBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const parent = btn.parentElement;
+        if (parent && parent.parentElement && parent.parentElement.id === 'tab-train') return;
+        document.querySelectorAll('.tabs > .tab-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+        document.getElementById(btn.dataset.tab).classList.add('active');
+      });
+    });
+
+    const trainSubBtns = document.querySelectorAll('[data-subtab]');
+    trainSubBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        trainSubBtns.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        const sub = btn.dataset.subtab;
+        document.getElementById('train-note').style.display = sub === 'note' ? '' : 'none';
+        document.getElementById('train-scale').style.display = sub === 'scale' ? '' : 'none';
+        document.getElementById('train-chord').style.display = sub === 'chord' ? '' : 'none';
+      });
+    });
+
+    const toast = document.getElementById('toast');
+    let toastTimer = null;
+    function showToast(msg, bad = false) {
+      toast.textContent = msg;
+      toast.classList.toggle('good', !bad);
+      toast.classList.toggle('bad', bad);
+      toast.style.display = 'block';
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => toast.style.display = 'none', 1400);
+    }
+
+    function updateScoreUI(area) {
+      const s = score[area];
+      const el = document.getElementById(area + 'Score');
+      const acc = s.total ? Math.round((s.correct / s.total) * 100) : 0;
+      el.innerHTML = `正确 <strong>${s.correct}</strong> / 次数 <strong>${s.total}</strong> · 正确率 <strong>${acc}%</strong> · 连对 <strong>${s.streak}</strong>` +
+        ` <button class="btn ghost" style="margin-left:8px" data-reset="${area}">重置</button>`;
+      el.querySelector('[data-reset]')?.addEventListener('click', () => {
+        score[area] = { correct: 0, total: 0, streak: 0 };
+        saveLocal(StorageKeys.score, score);
+        updateScoreUI(area);
+      });
+    }
+
+    updateScoreUI('note');
+    updateScoreUI('scale');
+    updateScoreUI('chord');
+
+    const Challenge = { type: null, data: null, waitingAnswer: false };
+
+    function randomInt(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+
+    function handlePotentialAnswer(type, midi) {
+      if (Challenge.waitingAnswer && Challenge.type === 'note' && type === 'note') {
+        const correctMidi = Challenge.data.midi;
+        const withOctave = document.getElementById('noteWithOctave').checked;
+        const ok = withOctave ? (midi === correctMidi) : ((midi % 12) === (correctMidi % 12));
+        finishAnswer('note', ok, () => {
+          highlightKey(correctMidi, true);
+          setTimeout(() => highlightKey(correctMidi, false), 450);
+        });
+      }
+    }
+
+    function finishAnswer(area, ok, after) {
+      score[area].total += 1;
+      if (ok) { score[area].correct += 1; score[area].streak += 1; showToast('答对啦！', false); }
+      else { score[area].streak = 0; showToast('再试一次～', true); }
+      saveLocal(StorageKeys.score, score);
+      updateScoreUI(area);
+      Challenge.waitingAnswer = false;
+      if (typeof after === 'function') after();
+    }
+
+    const notePlay = document.getElementById('notePlay');
+    const noteReplay = document.getElementById('noteReplay');
+    const noteReveal = document.getElementById('noteReveal');
+
+    notePlay.addEventListener('click', async () => {
+      await AudioEngine.resume();
+      const midi = randomInt(START_MIDI, END_MIDI);
+      Challenge.type = 'note';
+      Challenge.data = { midi };
+      Challenge.waitingAnswer = true;
+      AudioEngine.startNote(midi, { durationMs: 900 });
+    });
+
+    noteReplay.addEventListener('click', async () => {
+      if (Challenge.type === 'note' && Challenge.data) {
+        await AudioEngine.resume();
+        AudioEngine.startNote(Challenge.data.midi, { durationMs: 900 });
+      }
+    });
+
+    noteReveal.addEventListener('click', () => {
+      if (Challenge.type === 'note' && Challenge.data) {
+        const m = Challenge.data.midi;
+        finishAnswer('note', false, () => {
+          highlightKey(m, true);
+          setTimeout(() => highlightKey(m, false), 650);
+        });
+      }
+    });
+
+    const scalePlay = document.getElementById('scalePlay');
+    const scaleReplay = document.getElementById('scaleReplay');
+    const scaleReveal = document.getElementById('scaleReveal');
+    const scaleOptions = document.getElementById('scaleOptions');
+
+    function gatherChecked(className) {
+      return Array.from(document.querySelectorAll('.' + className + ':checked')).map(i => i.value);
+    }
+
+    function setScaleOptions(types) {
+      scaleOptions.innerHTML = '';
+      for (const t of types) {
+        const btn = document.createElement('button');
+        btn.className = 'btn';
+        btn.textContent = ScaleDefs[t].name;
+        btn.addEventListener('click', () => {
+          if (Challenge.type === 'scale') {
+            const ok = t === Challenge.data.type;
+            finishAnswer('scale', ok, () => highlightScale(Challenge.data.root, ScaleDefs[Challenge.data.type].steps));
+          }
+        });
+        scaleOptions.appendChild(btn);
+      }
+    }
+
+    scalePlay.addEventListener('click', async () => {
+      await AudioEngine.resume();
+      const types = gatherChecked('scale-type');
+      if (!types.length) return showToast('请至少勾选一种音阶', true);
+      const root = randomInt(START_MIDI, END_MIDI - 12);
+      const type = types[Math.floor(Math.random() * types.length)];
+      Challenge.type = 'scale';
+      Challenge.data = { root, type };
+      Challenge.waitingAnswer = true;
+      clearHighlight();
+      await AudioEngine.playScale(root, ScaleDefs[type].steps);
+      setScaleOptions(types);
+    });
+
+    scaleReplay.addEventListener('click', async () => {
+      if (Challenge.type === 'scale' && Challenge.data) {
+        await AudioEngine.resume();
+        await AudioEngine.playScale(Challenge.data.root, ScaleDefs[Challenge.data.type].steps);
+      }
+    });
+
+    scaleReveal.addEventListener('click', () => {
+      if (Challenge.type === 'scale' && Challenge.data) {
+        finishAnswer('scale', false, () => highlightScale(Challenge.data.root, ScaleDefs[Challenge.data.type].steps));
+      }
+    });
+
+    const chordPlay = document.getElementById('chordPlay');
+    const chordReplay = document.getElementById('chordReplay');
+    const chordReveal = document.getElementById('chordReveal');
+    const chordOptions = document.getElementById('chordOptions');
+
+    function setChordOptions(types) {
+      chordOptions.innerHTML = '';
+      for (const t of types) {
+        const btn = document.createElement('button');
+        btn.className = 'btn';
+        btn.textContent = ChordDefs[t].name;
+        btn.addEventListener('click', () => {
+          if (Challenge.type === 'chord') {
+            const ok = t === Challenge.data.type;
+            finishAnswer('chord', ok, () => highlightChord(Challenge.data.root, ChordDefs[Challenge.data.type].steps));
+          }
+        });
+        chordOptions.appendChild(btn);
+      }
+    }
+
+    chordPlay.addEventListener('click', async () => {
+      await AudioEngine.resume();
+      const types = gatherChecked('chord-type');
+      if (!types.length) return showToast('请至少勾选一种和弦', true);
+      const root = randomInt(START_MIDI, END_MIDI - 12);
+      const type = types[Math.floor(Math.random() * types.length)];
+      Challenge.type = 'chord';
+      Challenge.data = { root, type };
+      Challenge.waitingAnswer = true;
+      clearHighlight();
+      const mids = ChordDefs[type].steps.map(s => root + s);
+      AudioEngine.playChord(mids, { block: true, holdMs: 900 });
+      setChordOptions(types);
+    });
+
+    chordReplay.addEventListener('click', async () => {
+      if (Challenge.type === 'chord' && Challenge.data) {
+        await AudioEngine.resume();
+        const { root, type } = Challenge.data;
+        const mids = ChordDefs[type].steps.map(s => root + s);
+        AudioEngine.playChord(mids, { block: true, holdMs: 900 });
+      }
+    });
+
+    chordReveal.addEventListener('click', () => {
+      if (Challenge.type === 'chord' && Challenge.data) {
+        finishAnswer('chord', false, () => highlightChord(Challenge.data.root, ChordDefs[Challenge.data.type].steps));
+      }
+    });
+
+    function highlightScale(root, steps) {
+      clearHighlight();
+      for (const st of steps) highlightKey(root + st, true);
+      setTimeout(() => steps.forEach(st => highlightKey(root + st, false)), 1000);
+    }
+    function highlightChord(root, steps) {
+      clearHighlight();
+      for (const st of steps) highlightKey(root + st, true);
+      setTimeout(() => steps.forEach(st => highlightKey(root + st, false)), 1000);
+    }
+    function clearHighlight() {
+      keysEl.querySelectorAll('.active').forEach(el => el.classList.remove('active'));
+    }
+
+    const learnRoot = document.getElementById('learnRoot');
+    const learnScale = document.getElementById('learnScale');
+    const learnChord = document.getElementById('learnChord');
+    const playLearnScale = document.getElementById('playLearnScale');
+    const playLearnChord = document.getElementById('playLearnChord');
+    const clearHighlightBtn = document.getElementById('clearHighlight');
+
+    function refreshLearnRootOptions() {
+      const prev = learnRoot.value;
+      learnRoot.innerHTML = '';
+      for (let m = 48; m <= 72; m++) {
+        const opt = document.createElement('option');
+        opt.value = String(m);
+        opt.textContent = noteName(m, settings.useFlats, false);
+        learnRoot.appendChild(opt);
+      }
+      if (prev) learnRoot.value = prev;
+    }
+
+    refreshLearnRootOptions();
+
+    learnScale.addEventListener('change', () => {
+      const root = Number(learnRoot.value) || 60;
+      const def = ScaleDefs[learnScale.value];
+      highlightScale(root, def.steps);
+    });
+
+    learnChord.addEventListener('change', () => {
+      const root = Number(learnRoot.value) || 60;
+      const def = ChordDefs[learnChord.value];
+      highlightChord(root, def.steps);
+    });
+
+    playLearnScale.addEventListener('click', async () => {
+      await AudioEngine.resume();
+      const root = Number(learnRoot.value) || 60;
+      const def = ScaleDefs[learnScale.value];
+      await AudioEngine.playScale(root, def.steps);
+    });
+
+    playLearnChord.addEventListener('click', async () => {
+      await AudioEngine.resume();
+      const root = Number(learnRoot.value) || 60;
+      const def = ChordDefs[learnChord.value];
+      const mids = def.steps.map(s => root + s);
+      AudioEngine.playChord(mids, { block: true, holdMs: 1000 });
+    });
+
+    clearHighlightBtn.addEventListener('click', clearHighlight);
+
+  </script>
+</body>
+</html> 

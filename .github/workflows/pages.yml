@@ -22,14 +22,40 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Ensure Pages enabled via PAT (optional)
+        if: env.GH_PAT != ''
+        env:
+          GH_PAT: ${{ secrets.GH_PAT }}
+          OWNER: ${{ github.repository_owner }}
+          REPO: ${{ github.event.repository.name }}
+        run: |
+          set -e
+          echo "Using PAT to ensure Pages enabled for $OWNER/$REPO"
+          api="https://api.github.com/repos/$OWNER/$REPO/pages"
+          # Try GET; if 404 create
+          code=$(curl -s -o /dev/null -w "%{http_code}" -H "Authorization: token $GH_PAT" -H "Accept: application/vnd.github+json" "$api")
+          if [ "$code" = "404" ]; then
+            echo "Pages not found, creating..."
+            curl -s -X POST "$api" \
+              -H "Authorization: token $GH_PAT" \
+              -H "Accept: application/vnd.github+json" \
+              -d '{"source":{"branch":"main","path":"/"}}' || true
+          else
+            echo "Pages exists or accessible (code=$code)"
+          fi
+
       - name: Setup Pages
         uses: actions/configure-pages@v5
+        continue-on-error: true
         with:
           enablement: true
+
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
           path: .
+
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
